@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jadwal Masjid Al-Hidayah</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome (Existing) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Phosphor Icons (New for Jam Sholat) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -32,17 +35,26 @@
     <style>
         .islamic-pattern {
             background-color: #064e3b;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230f766e' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230f766e' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
         
         /* Hide scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Custom scrollbar for Tarawih list */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        /* Jam Sholat Specific Styles */
+        .prayer-card { transition: all 0.3s ease; }
+        .prayer-card.active {
+            background: linear-gradient(to right, #059669, #047857); /* Emerald 600-700 */
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+        }
+        .prayer-card.active .icon-container {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .prayer-card.passed { opacity: 0.6; background-color: #f3f4f6; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col text-sm">
@@ -64,11 +76,14 @@
     <!-- Tab Navigation (Sticky) -->
     <div class="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200">
         <div class="container max-w-2xl mx-auto flex">
-            <button onclick="switchTab('jumat')" id="btn-jumat" class="flex-1 py-3 text-center font-semibold text-emerald-700 border-b-2 border-emerald-600 bg-emerald-50/50 transition-all focus:outline-none">
-                <i class="fas fa-calendar-day mr-2"></i>Khatib Jumat
+            <button onclick="switchTab('jumat')" id="btn-jumat" class="flex-1 py-3 text-center font-semibold text-emerald-700 border-b-2 border-emerald-600 bg-emerald-50/50 transition-all focus:outline-none text-xs sm:text-sm">
+                <i class="fas fa-calendar-day mr-1 sm:mr-2"></i>Jumat
             </button>
-            <button onclick="switchTab('tarawih')" id="btn-tarawih" class="flex-1 py-3 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-emerald-600 transition-all focus:outline-none">
-                <i class="fas fa-moon mr-2"></i>Imam Tarawih
+            <button onclick="switchTab('tarawih')" id="btn-tarawih" class="flex-1 py-3 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-emerald-600 transition-all focus:outline-none text-xs sm:text-sm">
+                <i class="fas fa-moon mr-1 sm:mr-2"></i>Tarawih
+            </button>
+            <button onclick="switchTab('sholat')" id="btn-sholat" class="flex-1 py-3 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-emerald-600 transition-all focus:outline-none text-xs sm:text-sm">
+                <i class="fas fa-clock mr-1 sm:mr-2"></i>Jam Sholat
             </button>
         </div>
     </div>
@@ -76,21 +91,17 @@
     <!-- Main Content Container -->
     <main class="flex-grow container max-w-2xl mx-auto px-4 py-4 z-20 relative">
         
-        <!-- CONTENT TAB 1: JADWAL JUMAT -->
+        <!-- TAB 1: JADWAL JUMAT -->
         <div id="tab-jumat" class="block">
             <div id="loading-indicator" class="text-center py-10">
                 <i class="fas fa-spinner fa-spin text-2xl text-emerald-600"></i>
                 <p class="mt-2 text-xs text-gray-500">Mengambil Data Adzan Bandar Lampung (Kemenag RI)...</p>
             </div>
-            
-            <div id="schedule-container" class="space-y-3 hidden">
-                <!-- Accordion Items injected by JS -->
-            </div>
+            <div id="schedule-container" class="space-y-3 hidden"></div>
         </div>
 
-        <!-- CONTENT TAB 2: JADWAL TARAWIH -->
+        <!-- TAB 2: JADWAL TARAWIH -->
         <div id="tab-tarawih" class="hidden">
-            <!-- Search/Filter -->
             <div class="mb-4 pt-2">
                 <div class="relative">
                     <input type="text" id="searchInput" placeholder="Cari nama imam atau tanggal..." 
@@ -98,24 +109,64 @@
                     <i class="fas fa-search text-gray-400 absolute left-3.5 top-3.5"></i>
                 </div>
             </div>
-
-            <!-- Legend -->
             <div class="flex items-center gap-2 mb-4 px-1">
                 <div class="w-3 h-3 bg-amber-100 border border-amber-300 rounded-sm"></div>
                 <span class="text-xs text-slate-500">Imam & Kultum (Malam 2-11)</span>
                 <div class="w-3 h-3 bg-white border border-gray-200 rounded-sm ml-2"></div>
                 <span class="text-xs text-slate-500">Imam Tarawih</span>
             </div>
-
-            <!-- List Container -->
-            <div id="tarawihList" class="space-y-2 pb-6">
-                <!-- Rows injected by JS -->
-            </div>
-
-            <!-- Empty State -->
+            <div id="tarawihList" class="space-y-2 pb-6"></div>
             <div id="emptyState" class="hidden flex flex-col items-center justify-center py-12 text-gray-400">
                 <i class="far fa-folder-open text-3xl mb-2"></i>
                 <p class="text-sm">Jadwal tidak ditemukan</p>
+            </div>
+        </div>
+
+        <!-- TAB 3: JAM SHOLAT (NEW) -->
+        <div id="tab-sholat" class="hidden space-y-4">
+            <!-- Controls -->
+            <div class="space-y-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <!-- Location -->
+                <div class="relative">
+                    <i class="ph ph-map-pin absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-600"></i>
+                    <select id="city-selector" class="w-full pl-9 pr-8 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium cursor-pointer appearance-none">
+                        <option value="">Memuat Kota...</option>
+                    </select>
+                    <i class="ph ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <!-- Date -->
+                <div class="relative">
+                    <i class="ph ph-calendar-blank absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-600"></i>
+                    <input type="date" id="date-picker" class="w-full pl-9 pr-4 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium uppercase text-gray-600">
+                </div>
+                <!-- Date Display -->
+                <div class="text-center pt-1 border-t border-gray-100 mt-2">
+                    <div id="date-display-text" class="inline-block text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                        Memuat...
+                    </div>
+                    <div id="hijri-date-display" class="block text-xs font-medium text-emerald-600 mt-1 italic">...</div>
+                </div>
+            </div>
+
+            <!-- Countdown -->
+            <div class="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 text-center shadow-lg relative overflow-hidden text-white">
+                <div class="absolute top-0 right-0 p-3 opacity-10">
+                    <i class="ph ph-mosque text-6xl"></i>
+                </div>
+                <p class="text-xs font-medium tracking-wider uppercase text-emerald-100 mb-1">Menuju Waktu</p>
+                <h2 id="next-prayer-name" class="text-2xl font-bold mb-2">...</h2>
+                <div class="text-4xl font-mono font-bold tracking-tight mb-2" id="countdown-timer">--:--:--</div>
+                <div class="text-xs text-emerald-200 flex justify-center items-center gap-1 bg-black/20 inline-block px-3 py-1 rounded-full">
+                    <i class="ph ph-clock"></i> <span id="current-time">00:00:00 WIB</span>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div id="schedule-list" class="space-y-3 pb-6">
+                <div class="text-center py-10 text-gray-400">
+                    <i class="ph ph-spinner animate-spin text-2xl"></i>
+                    <p class="text-sm mt-2">Memuat jadwal...</p>
+                </div>
             </div>
         </div>
 
@@ -124,28 +175,11 @@
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 mt-auto text-xs">
         <div class="container max-w-2xl mx-auto px-4 py-6">
-            <!-- Catatan Penting -->
-            <div class="bg-red-50 border-l-2 border-red-500 p-3 rounded-r shadow-sm mb-6">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
-                    </div>
-                    <div class="ml-2">
-                        <h3 class="font-medium text-red-800">Catatan Penting</h3>
-                        <p class="text-red-700 mt-0.5 leading-tight">
-                            Jika petugas (Khatib/Imam/Bilal) berhalangan hadir mohon pemberitahuan <strong>2 hari sebelumnya</strong>.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
+            
             <!-- Aplikasi Lainnya Section -->
             <div class="mb-6">
                 <h3 class="font-bold text-emerald-900 mb-3 text-center uppercase tracking-wide border-b border-gray-100 pb-2">Aplikasi Bermanfaat Lainnya</h3>
                 <div class="grid grid-cols-2 gap-3">
-                    <a href="https://msindrawan.github.io/jamsholat/" target="_blank" class="flex items-center p-2 rounded-lg border border-gray-100 bg-gray-50 hover:bg-emerald-50 transition-all group">
-                        <i class="fas fa-clock text-emerald-600 mr-2"></i> <span class="group-hover:text-emerald-800">Jam Sholat</span>
-                    </a>
                     <a href="https://hitungwarisku.pages.dev/" target="_blank" class="flex items-center p-2 rounded-lg border border-gray-100 bg-gray-50 hover:bg-emerald-50 transition-all group">
                         <i class="fas fa-file-invoice-dollar text-emerald-600 mr-2"></i> <span class="group-hover:text-emerald-800">Kalkulator Waris</span>
                     </a>
@@ -165,8 +199,7 @@
             </div>
 
             <div class="text-center mt-6 text-gray-400">
-                &copy; 2026 DKM Masjid Al-Hidayah.<br>
-                <span class="text-[10px] opacity-75 font-mono">Versi 1.3 (Gabungan)</span>
+                &copy; 2026 <span class="text-emerald-600 font-semibold">@msindrawan</span> | <span class="text-[10px] opacity-75 font-mono">Versi 1.8</span>
             </div>
         </div>
     </footer>
@@ -174,31 +207,24 @@
     <script>
         // --- LOGIC TAB NAVIGATION ---
         function switchTab(tabName) {
-            const tabJumat = document.getElementById('tab-jumat');
-            const tabTarawih = document.getElementById('tab-tarawih');
-            const btnJumat = document.getElementById('btn-jumat');
-            const btnTarawih = document.getElementById('btn-tarawih');
-
-            if (tabName === 'jumat') {
-                tabJumat.classList.remove('hidden');
-                tabTarawih.classList.add('hidden');
+            const tabs = ['jumat', 'tarawih', 'sholat'];
+            tabs.forEach(t => {
+                const content = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`btn-${t}`);
                 
-                // Active State Jumat
-                btnJumat.className = "flex-1 py-3 text-center font-bold text-emerald-700 border-b-2 border-emerald-600 bg-emerald-50/50 transition-all";
-                // Inactive State Tarawih
-                btnTarawih.className = "flex-1 py-3 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-emerald-600 transition-all";
-            } else {
-                tabJumat.classList.add('hidden');
-                tabTarawih.classList.remove('hidden');
-                
-                // Inactive State Jumat
-                btnJumat.className = "flex-1 py-3 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-emerald-600 transition-all";
-                // Active State Tarawih
-                btnTarawih.className = "flex-1 py-3 text-center font-bold text-emerald-700 border-b-2 border-emerald-600 bg-emerald-50/50 transition-all";
-            }
+                if (t === tabName) {
+                    content.classList.remove('hidden');
+                    btn.className = "flex-1 py-3 text-center font-bold text-emerald-700 border-b-2 border-emerald-600 bg-emerald-50/50 transition-all text-xs sm:text-sm";
+                } else {
+                    content.classList.add('hidden');
+                    btn.className = "flex-1 py-3 text-center font-medium text-gray-500 border-b-2 border-transparent hover:text-emerald-600 transition-all text-xs sm:text-sm";
+                }
+            });
         }
 
-        // --- LOGIC JADWAL JUMAT (VERSION 1.2) ---
+        /* =========================================
+           LOGIC: JADWAL KHATIB JUMAT
+           ========================================= */
         const khatibRotation = {
             1: "Ust. Dr. Riyuzen Praja Tuala, M. Pd.",
             2: "Ust. Hanafi",
@@ -206,12 +232,9 @@
             4: "Ust. Husnuddin A. Ma.",
             5: "Ust. M. Fathon Zein, S. Pd."
         };
-
         const targetYear = 2026;
-        const startMonth = 0; // Januari
-        const endMonth = 5;   // Juni
+        const startMonth = 0; const endMonth = 5;
         let prayerTimesCache = {};
-
         const hijriRefDates = [
             { date: new Date(2026, 0, 1),  hDay: 12, hMonth: 'Rajab',       hYear: 1447 },
             { date: new Date(2026, 0, 20), hDay: 1,  hMonth: "Sya'ban",     hYear: 1447 },
@@ -223,8 +246,7 @@
         ];
 
         function getMonthName(monthIndex) {
-            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            return months[monthIndex];
+            return ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][monthIndex];
         }
 
         function getKemenagHijri(date) {
@@ -354,10 +376,12 @@
                 monthItem.innerHTML = accordionHeader + accordionBodyStart + cards + accordionBodyEnd;
                 container.appendChild(monthItem);
             }
-            setTimeout(() => { toggleAccordion(1); }, 500); // Default open Feb
+            setTimeout(() => { toggleAccordion(1); }, 500); 
         }
 
-        // --- LOGIC JADWAL TARAWIH (DARI FILE UPLOAD) ---
+        /* =========================================
+           LOGIC: IMAM TARAWIH
+           ========================================= */
         const tarawihData = [
             { no: 1, date: "18 Feb", fullDate: "18 Februari 2026", night: "1", imam: "Bpk. Rufdi Y", bilal: "Bpk. Firman" },
             { no: 2, date: "19 Feb", fullDate: "19 Februari 2026", night: "2", imam: "Ustadz A. Noor Islahudin", bilal: "Bpk. Firman" },
@@ -435,15 +459,268 @@
             });
         }
 
+        /* =========================================
+           LOGIC: JAM SHOLAT (NEW TAB)
+           ========================================= */
+        const LAMPUNG_CITIES = [
+            { name: "Kota Bandar Lampung", lat: -5.4294, long: 105.2625 },
+            { name: "Kota Metro", lat: -5.1131, long: 105.3045 },
+            { name: "Kab. Lampung Barat", lat: -5.0358, long: 104.0456 },
+            { name: "Kab. Lampung Selatan", lat: -5.7267, long: 105.5897 },
+            { name: "Kab. Lampung Tengah", lat: -4.9569, long: 105.2106 },
+            { name: "Kab. Lampung Timur", lat: -5.0747, long: 105.5344 },
+            { name: "Kab. Lampung Utara", lat: -4.8239, long: 104.8833 },
+            { name: "Kab. Way Kanan", lat: -4.5025, long: 104.5244 },
+            { name: "Kab. Tulang Bawang", lat: -4.4756, long: 105.2392 },
+            { name: "Kab. Pesawaran", lat: -5.4128, long: 105.1064 },
+            { name: "Kab. Pringsewu", lat: -5.3622, long: 104.9750 },
+            { name: "Kab. Mesuji", lat: -3.8825, long: 105.3536 },
+            { name: "Kab. Tulang Bawang Barat", lat: -4.4361, long: 105.0347 },
+            { name: "Kab. Pesisir Barat", lat: -5.1953, long: 103.9317 },
+            { name: "Kab. Tanggamus", lat: -5.4967, long: 104.6225 }
+        ];
+        
+        const prayerIcons = {
+            'Imsak': 'ph-moon-stars',
+            'Fajr': 'ph-cloud-sun',
+            'Sunrise': 'ph-sun-horizon',
+            'Duha': 'ph-sun',
+            'Dhuhr': 'ph-sun-dim',
+            'Asr': 'ph-cloud-sun',
+            'Maghrib': 'ph-cloud-moon',
+            'Isha': 'ph-moon'
+        };
+
+        let sholatSchedule = {};
+        let selectedCityIndex = localStorage.getItem('selectedCityIndex');
+        let countdownInterval;
+
+        async function initSholatApp() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            const today = new Date();
+            const datePicker = document.getElementById('date-picker');
+            datePicker.valueAsDate = today;
+            updateDateDisplayText(today);
+
+            populateCities();
+            
+            if(selectedCityIndex === null || selectedCityIndex === undefined || selectedCityIndex >= LAMPUNG_CITIES.length) {
+                const bandarLampungIndex = LAMPUNG_CITIES.findIndex(c => c.name === "Kota Bandar Lampung");
+                selectedCityIndex = bandarLampungIndex !== -1 ? bandarLampungIndex : 0;
+            }
+            
+            document.getElementById('city-selector').value = selectedCityIndex;
+            await loadSholatSchedule(selectedCityIndex, today);
+
+            // Listeners
+            datePicker.addEventListener('change', (e) => {
+                const newDate = e.target.valueAsDate;
+                if(newDate) {
+                    updateDateDisplayText(newDate);
+                    loadSholatSchedule(selectedCityIndex, newDate);
+                }
+            });
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour12: false });
+            const clockEl = document.getElementById('current-time');
+            if(clockEl) clockEl.textContent = timeStr + ' WIB';
+        }
+
+        function populateCities() {
+            LAMPUNG_CITIES.sort((a, b) => a.name.localeCompare(b.name));
+            const selector = document.getElementById('city-selector');
+            selector.innerHTML = '';
+            LAMPUNG_CITIES.forEach((city, index) => {
+                const option = document.createElement('option');
+                option.value = index; 
+                option.textContent = city.name;
+                selector.appendChild(option);
+            });
+            selector.addEventListener('change', (e) => {
+                selectedCityIndex = e.target.value;
+                localStorage.setItem('selectedCityIndex', selectedCityIndex);
+                loadSholatSchedule(selectedCityIndex, document.getElementById('date-picker').valueAsDate);
+            });
+        }
+
+        function updateDateDisplayText(dateObj) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-display-text').textContent = dateObj.toLocaleDateString('id-ID', options);
+        }
+
+        async function loadSholatSchedule(cityIdx, dateObj) {
+            if (!dateObj) dateObj = new Date();
+            const city = LAMPUNG_CITIES[cityIdx];
+            const listEl = document.getElementById('schedule-list');
+            
+            try {
+                const dd = String(dateObj.getDate()).padStart(2, '0');
+                const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const yyyy = dateObj.getFullYear();
+                const url = `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=${city.lat}&longitude=${city.long}&method=20`;
+                
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.code === 200 && result.data) {
+                    if(result.data.date && result.data.date.hijri) {
+                        const h = result.data.date.hijri;
+                        document.getElementById('hijri-date-display').textContent = `${h.day} ${h.month.en} ${h.year}`;
+                    }
+                    sholatSchedule = result.data.timings;
+                    if (sholatSchedule.Sunrise && !sholatSchedule.Duha) {
+                        sholatSchedule.Duha = addMinutes(sholatSchedule.Sunrise, 20); 
+                    }
+                    renderSholatCards(sholatSchedule, dateObj);
+                }
+            } catch (error) {
+                console.error(error);
+                listEl.innerHTML = '<div class="text-center text-red-500 text-xs p-4">Gagal memuat data. Periksa koneksi internet.</div>';
+            }
+        }
+
+        function addMinutes(timeStr, minsToAdd) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes + minsToAdd);
+            return date.toTimeString().slice(0, 5);
+        }
+
+        function renderSholatCards(timings, selectedDate) {
+            const listEl = document.getElementById('schedule-list');
+            listEl.innerHTML = '';
+            
+            const keysToDisplay = [
+                { key: 'Fajr', label: 'Subuh' },
+                { key: 'Sunrise', label: 'Syuruq' },
+                { key: 'Duha', label: 'Dhuha' },
+                { key: 'Dhuhr', label: 'Dzuhur' },
+                { key: 'Asr', label: 'Ashar' },
+                { key: 'Maghrib', label: 'Maghrib' },
+                { key: 'Isha', label: 'Isya' }
+            ];
+
+            const now = new Date();
+            
+            keysToDisplay.forEach((item) => {
+                let timeStrRaw = timings[item.key] || timings[item.label];
+                if (!timeStrRaw) return;
+                
+                const timeStr = timeStrRaw.substring(0, 5);
+                const timeObj = getPrayerDateObject(timeStr, selectedDate);
+                const isPassed = now > timeObj;
+                
+                const div = document.createElement('div');
+                div.className = `prayer-card bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-gray-100 ${isPassed ? 'passed' : ''}`;
+                div.dataset.time = timeObj.getTime();
+                div.dataset.name = item.label;
+                
+                // Icon
+                const iconClass = prayerIcons[item.key] || 'ph-clock';
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="icon-container w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm">
+                            <i class="ph ${iconClass} text-xl"></i>
+                        </div>
+                        <span class="font-bold text-base">${item.label}</span>
+                    </div>
+                    <span class="font-mono font-semibold text-lg tracking-wide">${timeStr}</span>
+                `;
+                listEl.appendChild(div);
+            });
+            determineNextPrayer(selectedDate);
+        }
+
+        function getPrayerDateObject(timeStr, dateContext) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const date = new Date(dateContext);
+            date.setHours(hours, minutes, 0, 0);
+            return date;
+        }
+
+        function determineNextPrayer(selectedDate) {
+            const now = new Date();
+            const cards = document.querySelectorAll('.prayer-card');
+            let nextPrayerTime = null;
+            let nextPrayerName = "";
+            const nextNameEl = document.getElementById('next-prayer-name');
+            const timerEl = document.getElementById('countdown-timer');
+
+            cards.forEach(c => c.classList.remove('active'));
+
+            for (let card of cards) {
+                const pTime = parseInt(card.dataset.time);
+                if (pTime > now.getTime()) {
+                    nextPrayerTime = pTime;
+                    nextPrayerName = card.dataset.name;
+                    card.classList.add('active');
+                    break;
+                }
+            }
+
+            if (!nextPrayerTime) {
+                const isSame = selectedDate.getDate() === now.getDate() && 
+                               selectedDate.getMonth() === now.getMonth() && 
+                               selectedDate.getFullYear() === now.getFullYear();
+                
+                if (isSame) {
+                    // Logic besok subuh
+                    const subuhRaw = sholatSchedule['Fajr'];
+                    if (subuhRaw) {
+                        const tomorrow = new Date(now);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        const subuhTime = getPrayerDateObject(subuhRaw.substring(0,5), tomorrow);
+                        nextNameEl.textContent = "Subuh (Besok)";
+                        startSholatCountdown(subuhTime.getTime());
+                        return;
+                    }
+                }
+                nextNameEl.textContent = "Selesai";
+                timerEl.textContent = "--:--:--";
+                return;
+            }
+
+            if (nextPrayerTime) {
+                nextNameEl.textContent = nextPrayerName;
+                startSholatCountdown(nextPrayerTime);
+            }
+        }
+
+        function startSholatCountdown(targetTime) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            const timerEl = document.getElementById('countdown-timer');
+
+            countdownInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = targetTime - now;
+
+                if (distance < 0) {
+                    clearInterval(countdownInterval);
+                    timerEl.textContent = "00:00:00";
+                    document.getElementById('next-prayer-name').textContent = "Waktunya Sholat!";
+                    return;
+                }
+
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                timerEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
         // --- INIT ALL ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Init Jumat
             initJumatApp();
-            
-            // Init Tarawih
             renderTarawihSchedule(tarawihData);
+            initSholatApp();
             
-            // Tarawih Search Logic
+            // Search Listener Tarawih
             document.getElementById('searchInput').addEventListener('input', (e) => {
                 const keyword = e.target.value.toLowerCase();
                 const filtered = tarawihData.filter(item => 
@@ -459,5 +736,3 @@
     </script>
 </body>
 </html>
-
-
